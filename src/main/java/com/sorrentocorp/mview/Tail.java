@@ -21,8 +21,10 @@ import java.util.Set;
 
 public class Tail {
 	final String filename;
+	final FileWatch fw;
 	public Tail(String filename) {
 		this.filename = filename;
+		this.fw = new FileWatch(filename);
 	}
 	void p(Object obj) {
 		System.out.println(obj);
@@ -32,14 +34,7 @@ public class Tail {
 		WatchEvent.Kind kind = event.kind();
 		if (kind == OVERFLOW)
 			return;
-		Path path = ((WatchEvent<Path>)event).context();
-		FileChannel channel = FileChannel.open(path);
-		ByteBuffer buf = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		for (int i = 0; i < buf.limit(); i++) {
-			out.write(buf.get(i));
-		}
-		p(out.toString());
+		System.out.print(fw.emit());
 	}
 
 	public void run () throws IOException {
