@@ -16,33 +16,41 @@ import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class Tail {
-	final String filename;
-	final FileWatch fw;
-	public Tail(String filename) {
-		this.filename = filename;
-		this.fw = new FileWatch(filename);
-	}
-	void p(Object obj) {
-		System.out.println(obj);
+	final Map<Path, FileWatch> watches = new HashMap<>();
+
+	public Tail(String[] filenames) {
+		for (String f: filenames) {
+			Path p = Paths.get(f).toAbsolutePath();
+			watches.put(p, new FileWatch(p));
+		}
 	}
 
-	void processEvent(WatchEvent<?> event) throws IOException {
+	void processEvent(Path dir, WatchEvent<?> event) throws IOException {
 		WatchEvent.Kind kind = event.kind();
 		if (kind == OVERFLOW)
 			return;
-		System.out.print(fw.emit());
+		Path p = dir.resolve(((WatchEvent<Path>)event).context()).toAbsolutePath();
+		System.out.println("got new line for file " + p);
+		System.out.print(watches.get(p).emit());
 	}
 
 	public void run () throws IOException {
 		try (WatchService watcher = FileSystems.getDefault().newWatchService()) {
+			// register with watch service
 			Set<WatchKey> keys = new HashSet<>();
-			Path path = Paths.get(filename).toAbsolutePath();
-			p("watching path " + path);
-			keys.add(path.getParent().register(watcher, ENTRY_MODIFY));
+			Set<Path> directories = new HashSet<>();
+			for (Path p: watches.keySet()) {
+				Path dir = p.getParent();
+				directories.add(dir);
+				if (keys.add(dir.register(watcher, ENTRY_MODIFY)))
+					System.out.println("watching directory " + dir);
+			}
 
 			while(true) {
 				WatchKey key = null;
@@ -53,16 +61,17 @@ public class Tail {
 				}
 
 				for (WatchEvent<?> event: key.pollEvents()) {
-					processEvent(event);
+					processEvent((Path)key.watchable(), event);
 				}
 				if (!key.reset()) {
 					key.cancel();
+					keys.remove(key);
 				}
 			}
 		}
 	}
 
 	public static void main (String[] args) throws Exception {
-		new Tail(args[0]).run();
+		new Tail(args).run();
 	}
 }

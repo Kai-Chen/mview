@@ -1,12 +1,12 @@
 package com.sorrentocorp.mview
 
 import java.io.ByteArrayOutputStream
-import java.nio.file.{Path, Paths,WatchEvent}
+import java.nio.file.{Path,WatchEvent}
 import java.nio.channels.FileChannel
 
-case class FileWatch(filepath: String) {
-  val path = Paths.get(filepath).toAbsolutePath
-  assert(path.toFile.exists, s"Expected filepath $filepath ($path) to exist")
+class FileWatch(p: Path) {
+  val path = p.toAbsolutePath
+  assert(path.toFile.exists, s"Expected filepath [$path] to exist")
 
   /** The last byte offset we read, note that this limits us to 2G file size */
   private var last: Int = 0
@@ -24,7 +24,7 @@ case class FileWatch(filepath: String) {
     val start = if (len < last) 0 else last
     last = len
 
-    // maps
+    // maps the new content region into memory
 		val buf = channel.map(FileChannel.MapMode.READ_ONLY, start, len - start)
     val out = new ByteArrayOutputStream
     for (i <- 0 to buf.limit - 1)
