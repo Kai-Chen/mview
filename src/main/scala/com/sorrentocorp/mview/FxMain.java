@@ -6,6 +6,7 @@ import java.util.Map;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -21,13 +22,15 @@ public class FxMain extends Application {
 	Pane root;
 	int numOfPanes;
 
-	TextArea getLogArea(int id) {
-		TextArea retval = new TextArea(String.valueOf(id));
-    retval.setStyle("-fx-highlight-fill: lightgray; -fx-highlight-text-fill: firebrick; -fx-font-size: 20px;");
-    retval.setEditable(false);
-    retval.addEventFilter(MouseEvent.ANY, new EventHandler<MouseEvent>() {
-      @Override public void handle(MouseEvent t) { t.consume(); }
-    });
+	Pane getLogArea(String id) {
+		Pane retval = new VBox(5);
+		retval.getChildren().add(new Label(id));
+
+		TextArea logarea = new TextArea("blank");
+    logarea.setStyle("-fx-highlight-fill: lightgray; -fx-highlight-text-fill: firebrick; -fx-font-size: 12px;");
+    logarea.setEditable(false);
+		retval.getChildren().add(logarea);
+
 		return retval;
 	}
 
@@ -36,11 +39,9 @@ public class FxMain extends Application {
 		List<String> params = getParameters().getUnnamed();
 		numOfPanes = params.size();
 
-		root = new VBox();
-		Node[] logs = new Node[numOfPanes];
+		root = new VBox(10);
 		for (int i = 0; i < numOfPanes; i++)
-			logs[i] = getLogArea(i+1);
-		root.getChildren().addAll(logs);
+			root.getChildren().add(getLogArea(params.get(i)));
 
 		stage.setScene(new Scene(root));
 		stage.show();
