@@ -33,3 +33,6 @@ class FileWatch(p: Path) {
   }
 
 }
+
+case class FileTruncated(path: Path)
+case class FileModified(path: Path, added: String)
