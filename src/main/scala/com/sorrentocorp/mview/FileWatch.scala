@@ -4,9 +4,8 @@ import java.io.ByteArrayOutputStream
 import java.nio.file.{Path,WatchEvent}
 import java.nio.channels.FileChannel
 
-class FileWatch(p: Path) {
-  val path = p.toAbsolutePath
-  assert(path.toFile.exists, s"Expected filepath [$path] to exist")
+class FileWatch(id: FileId) {
+  val path = id.realPath
 
   /** The last byte offset we read, note that this limits us to 2G file size */
   private var last: Int = 0
@@ -34,5 +33,14 @@ class FileWatch(p: Path) {
 
 }
 
-case class FileTruncated(path: Path)
-case class FileModified(path: Path, added: String)
+case class FileId(id: Int, realPath: Path)
+object FileId {
+  private val idgen = new java.util.concurrent.atomic.AtomicInteger(1)
+
+  def apply(path: Path): FileId = {
+    new FileId(idgen.getAndIncrement, path.toRealPath())
+  }
+}
+
+case class FileTruncated(id: FileId)
+case class FileModified(id: FileId, added: String)

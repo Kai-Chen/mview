@@ -47,7 +47,7 @@ public class MainController {
 
 	@Subscribe
 	public void fileTruncated(FileTruncated event) {
-		System.out.println("received file truncated event " + event);
+		System.out.println("received file truncated event " + event + " id is " + event.id());
 	}
 
 	@Subscribe

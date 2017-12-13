@@ -26,8 +26,8 @@ public class Tail {
 
 	public Tail(String[] filenames) {
 		for (String f: filenames) {
-			Path p = Paths.get(f).toAbsolutePath();
-			watches.put(p, new FileWatch(p));
+			Path p = Paths.get(f);
+			watches.put(p, new FileWatch(FileId.apply(p)));
 		}
 	}
 
