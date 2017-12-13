@@ -14,7 +14,7 @@ import javafx.scene.layout.VBox;
 
 public class MainController {
 	private final List<String> lognames = new ArrayList<>();
-  private final Map<String, TextArea> logs = new HashMap<>();
+  private final Map<FileId, TextArea> logs = new HashMap<>();
 
 	public MainController(List<String> lognames) {
 		this.lognames.addAll(lognames);
@@ -27,21 +27,21 @@ public class MainController {
 		return retval;
 	}
 
-	Pane createLogArea(String id) {
+	Pane createLogArea(String path) {
 		Pane retval = new VBox(5);
-		retval.getChildren().add(new Label(id));
+		retval.getChildren().add(new Label(path));
 
 		TextArea logarea = new TextArea("blank");
     logarea.setStyle("-fx-highlight-fill: lightgray; -fx-highlight-text-fill: firebrick; -fx-font-size: 12px;");
     logarea.setEditable(false);
 		retval.getChildren().add(logarea);
 
-		logs.put(id, logarea);
+		logs.put(FileId.apply(path), logarea);
 
 		return retval;
 	}
 
-	TextArea getLogArea(String id) {
+	TextArea getLogArea(FileId id) {
 		return logs.get(id);
 	}
 
@@ -52,6 +52,6 @@ public class MainController {
 
 	@Subscribe
 	public void fileModified(FileModified event) {
-		System.out.println("received file modified event " + event);
+		System.out.println("received file modified event " + event.id());
 	}
 }

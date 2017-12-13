@@ -1,7 +1,7 @@
 package com.sorrentocorp.mview
 
 import java.io.ByteArrayOutputStream
-import java.nio.file.{Path,WatchEvent}
+import java.nio.file.{Path,Paths}
 import java.nio.channels.FileChannel
 
 class FileWatch(id: FileId) {
@@ -37,8 +37,10 @@ case class FileId(id: Int, realPath: Path)
 object FileId {
   private val idgen = new java.util.concurrent.atomic.AtomicInteger(1)
 
-  def apply(path: Path): FileId = {
-    new FileId(idgen.getAndIncrement, path.toRealPath())
+  // TODO: okay to get a new id for the same path for now, but may
+  // need to check for uniqueness later
+  def apply(path: String): FileId = {
+    new FileId(idgen.getAndIncrement, Paths.get(path).toRealPath())
   }
 }
 
