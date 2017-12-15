@@ -1,5 +1,7 @@
 package com.sorrentocorp.mview;
 
+import com.google.common.eventbus.EventBus;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -21,13 +23,15 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class Tail {
-	final Map<Path, FileWatch> watches = new HashMap<>();
+public class Tail implements Runnable {
+	final EventBus eventBus;
+	final Map<FileId, FileWatch> watches = new HashMap<>();
 
-	public Tail(String[] filenames) {
+	public Tail(EventBus eventBus, String[] filenames) {
+		this.eventBus = eventBus;
 		for (String f: filenames) {
 			FileId id = FileId.apply(f);
-			watches.put(id.realPath(), new FileWatch(id));
+			watches.put(id, new FileWatch(id));
 		}
 	}
 
@@ -35,18 +39,18 @@ public class Tail {
 		WatchEvent.Kind kind = event.kind();
 		if (kind == OVERFLOW)
 			return;
-		Path p = dir.resolve(((WatchEvent<Path>)event).context()).toAbsolutePath();
-		System.out.println("got new line for file " + p);
-		System.out.print(watches.get(p).emit());
+		Path p = dir.resolve(((WatchEvent<Path>)event).context());
+		FileId id = FileId.apply(p.toString());
+		eventBus.post(new FileModified(id, watches.get(p).emit()));
 	}
 
-	public void run () throws IOException {
+	public void run () {
 		try (WatchService watcher = FileSystems.getDefault().newWatchService()) {
 			// register with watch service
 			Set<WatchKey> keys = new HashSet<>();
 			Set<Path> directories = new HashSet<>();
-			for (Path p: watches.keySet()) {
-				Path dir = p.getParent();
+			for (FileId fid: watches.keySet()) {
+				Path dir = fid.realPath().getParent();
 				directories.add(dir);
 				if (keys.add(dir.register(watcher, ENTRY_MODIFY)))
 					System.out.println("watching directory " + dir);
@@ -68,10 +72,8 @@ public class Tail {
 					keys.remove(key);
 				}
 			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
-	}
-
-	public static void main (String[] args) throws Exception {
-		new Tail(args).run();
 	}
 }
