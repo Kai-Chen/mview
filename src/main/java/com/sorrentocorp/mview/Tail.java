@@ -20,6 +20,7 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,7 +28,7 @@ public class Tail implements Runnable {
 	final EventBus eventBus;
 	final Map<FileId, FileWatch> watches = new HashMap<>();
 
-	public Tail(EventBus eventBus, String[] filenames) {
+	public Tail(EventBus eventBus, List<String> filenames) {
 		this.eventBus = eventBus;
 		for (String f: filenames) {
 			FileId id = FileId.apply(f);
@@ -41,8 +42,10 @@ public class Tail implements Runnable {
 			return;
 		Path p = dir.resolve(((WatchEvent<Path>)event).context());
 		FileId id = FileId.apply(p.toString());
-		eventBus.post(new FileModified(id, watches.get(p).emit()));
+		eventBus.post(new FileModified(id, watches.get(id).emit()));
 	}
+
+	private boolean keepgoing = true;
 
 	public void run () {
 		try (WatchService watcher = FileSystems.getDefault().newWatchService()) {
@@ -56,7 +59,7 @@ public class Tail implements Runnable {
 					System.out.println("watching directory " + dir);
 			}
 
-			while(true) {
+			while (keepgoing) {
 				WatchKey key = null;
 				try {
 					key = watcher.take();
@@ -75,5 +78,9 @@ public class Tail implements Runnable {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public void stop () {
+		keepgoing = false;
 	}
 }

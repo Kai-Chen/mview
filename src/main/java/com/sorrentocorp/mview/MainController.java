@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.Pane;
@@ -48,10 +49,16 @@ public class MainController {
 	@Subscribe
 	public void fileTruncated(FileTruncated event) {
 		System.out.println("received file truncated event " + event + " id is " + event.id());
+		Platform.runLater(() -> {
+				getLogArea(event.id()).clear();
+			});
 	}
 
 	@Subscribe
 	public void fileModified(FileModified event) {
 		System.out.println("received file modified event " + event.id());
+		Platform.runLater(() -> {
+				getLogArea(event.id()).appendText(event.added());
+			});
 	}
 }
