@@ -36,11 +36,17 @@ class FileWatch(id: FileId) {
 case class FileId(id: Int, realPath: Path)
 object FileId {
   private val idgen = new java.util.concurrent.atomic.AtomicInteger(1)
+  private var fileIds: Map[Path, FileId] = Map()
 
-  // TODO: okay to get a new id for the same path for now, but may
-  // need to check for uniqueness later
   def apply(path: String): FileId = {
-    new FileId(idgen.getAndIncrement, Paths.get(path).toRealPath())
+    val p = Paths.get(path).toRealPath()
+    fileIds.get(p) match {
+      case Some(fid) => fid
+      case None =>
+        val fid = new FileId(idgen.getAndIncrement, p)
+        fileIds += (p -> fid)
+        fid
+    }
   }
 }
 
