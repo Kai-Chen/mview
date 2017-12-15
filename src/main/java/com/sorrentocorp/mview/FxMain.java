@@ -33,6 +33,7 @@ public class FxMain extends Application {
 	@Override
 	public void stop () throws Exception {
 		tailService.stop();
+		tailThread.interrupt();
 		tailThread.join();
 	}
 
